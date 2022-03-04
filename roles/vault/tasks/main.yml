@@ -1,0 +1,26 @@
+---
+- name: install requirements
+  apt:
+    name:
+      - gnupg2
+      - software-properties-common
+    state: latest
+    update_cache: yes
+
+- name: add vault GPG key
+  apt_key:
+    url: https://apt.releases.hashicorp.com/gpg
+    state: present
+
+- name: add vault repository
+  apt_repository:
+    repo: deb [arch=amd64] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main
+    state: present
+    mode: '0666'
+
+- name: install vault
+  apt:
+    name:
+      - vault
+    state: latest
+    update_cache: yes

@@ -1,0 +1,58 @@
+[Interface]
+{{- with secret "wireguard/data/%{ client_name }%/interface" }}
+PrivateKey = {{ .Data.data.PrivateKey }}
+{{- if .Data.data.ListenPort }}
+ListenPort = {{ .Data.data.ListenPort }}
+{{- end }}
+{{- if .Data.data.FwMark }}
+FwMark = {{ .Data.data.FwMark }}
+{{- end }}
+{{- if .Data.data.Address }}
+Address = {{ .Data.data.Address }}
+{{- end }}
+{{- if .Data.data.DNS }}
+DNS = {{ .Data.data.DNS }}
+{{- end }}
+{{- if .Data.data.MTU }}
+MTU = {{ .Data.data.MTU }}
+{{- end }}
+{{- if .Data.data.Table }}
+Table = {{ .Data.data.Table }}
+{{- end }}
+{{- if .Data.data.PreUp }}
+PreUp = {{ .Data.data.PreUp }}
+{{- end }}
+{{- if .Data.data.PostUp }}
+PostUp = {{ .Data.data.PostUp }}
+{{- end }}
+{{- if .Data.data.PreDown }}
+PreDown = {{ .Data.data.PreDown }}
+{{- end }}
+{{- if .Data.data.PostDown }}
+PostDown = {{ .Data.data.PostDown }}
+{{- end }}
+{{- if .Data.data.SaveConfig }}
+SaveConfig = {{ .Data.data.SaveConfig }}
+{{- end }}
+{{- end }}
+
+{{ range secrets "wireguard/metadata/%{ client_name }%/peers/" -}}
+# {{ . }}
+{{ with secret (printf "wireguard/%{ client_name }%/peers/%s" .) -}}
+[Peer]
+PublicKey = {{ .Data.data.PublicKey }}
+{{- if .Data.data.PresharedKey }}
+PresharedKey = {{ .Data.data.PresharedKey }}
+{{- end }}
+{{- if .Data.data.AllowedIPs }}
+AllowedIPs = {{ .Data.data.AllowedIPs }}
+{{- end }}
+{{- if .Data.data.Endpoint }}
+Endpoint = {{ .Data.data.Endpoint }}
+{{- end }}
+{{- if .Data.data.PersistentKeepalive }}
+PersistentKeepalive = {{ .Data.data.PersistentKeepalive }}
+{{- end }}
+
+{{ end }}
+{{- end -}}

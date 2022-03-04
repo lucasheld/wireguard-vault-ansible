@@ -1,0 +1,11 @@
+[Unit]
+Requires=vault-server.service
+After=vault-server.service
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sleep 10
+ExecStart=/root/vault-unseal.sh
+
+[Install]
+WantedBy=multi-user.target

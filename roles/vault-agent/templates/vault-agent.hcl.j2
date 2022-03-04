@@ -1,0 +1,45 @@
+# from https://learn.hashicorp.com/tutorials/vault/agent-read-secrets?in=vault/app-integration
+
+pid_file = "/root/vault-agent.pid"
+
+vault {
+  address = "http://{{ hostvars[inventory_hostname]['groups']['vault-server'][0] }}:8200"
+}
+
+# https://www.vaultproject.io/docs/agent/autoauth
+auto_auth {
+  # https://www.vaultproject.io/docs/agent/autoauth/methods/approle
+  # https://www.vaultproject.io/docs/auth/approle
+  method "approle" {
+    config = {
+      role_id_file_path = "/root/role_id-wireguard"
+      secret_id_file_path = "/root/secret_id-wireguard"
+      remove_secret_id_file_after_reading = false
+    }
+  }
+
+  sink "file" {
+    config = {
+      path = "/root/agent-token"
+    }
+  }
+}
+
+cache {
+  use_auto_auth_token = true
+}
+
+listener "tcp" {
+  address = "0.0.0.0:8100"
+  tls_disable = true
+}
+
+template {
+  source = "/etc/wireguard/wg0.ctmpl"
+  destination = "/etc/wireguard/wg0.conf"
+  command = "/usr/local/bin/wg-reload.sh"
+}
+
+template_config {
+  static_secret_render_interval = 30  # 30s, default: 5m
+}

@@ -1,0 +1,7 @@
+---
+- name: install requirements
+  apt:
+    name:
+      - wireguard
+    state: latest
+    update_cache: yes

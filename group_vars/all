@@ -1,0 +1,13 @@
+# vault-rotate cron schedule
+rotate_schedule:
+  minute: "0"
+  hour: "4"
+  day: "*"
+  month: "*"
+  weekday: "*"
+
+# rotate key pairs in vault-rotate cron job
+rotate_key_pairs: true
+
+# rotate preshared keys in vault-rotate cron job
+rotate_preshared_keys: true

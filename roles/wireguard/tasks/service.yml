@@ -1,0 +1,5 @@
+---
+- name: enable wireguard service
+  systemd:
+    name: wg-quick@wg0.service
+    enabled: yes

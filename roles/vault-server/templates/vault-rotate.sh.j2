@@ -1,0 +1,11 @@
+#!/bin/sh
+
+config=$(cat /root/vault_keys)
+root_token=$(echo "${config}" | jq -r .root_token)
+
+{% if rotate_key_pairs -%}
+python3 /root/vault-helper.py --vault-addr="http://127.0.0.1:8200" --vault-token="${root_token}" rotate-key-pairs
+{% endif %}
+{% if rotate_preshared_keys -%}
+python3 /root/vault-helper.py --vault-addr="http://127.0.0.1:8200" --vault-token="${root_token}" rotate-preshared-keys
+{% endif %}

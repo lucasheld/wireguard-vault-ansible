@@ -1,0 +1,33 @@
+---
+# remove clients that do not exist in the inventory
+- hosts: vault-server
+  become: yes
+  tasks:
+    - name: read vault_keys file
+      slurp:
+        src: /root/vault_keys
+      register: vault_keys_file
+
+    - set_fact:
+        vault_root_token: "{{ (vault_keys_file['content'] | b64decode | from_json)['root_token'] }}"
+
+    - name: remove not existing client using vault-helper.py
+      command: "python3 /root/vault-helper.py --vault-addr=http://127.0.0.1:8200 --vault-token={{ vault_root_token }} rm-client --exclude {{ groups['vault-agents'] | join(' ') }}"
+      register: add_client_output
+
+# configure clients from the inventory
+- hosts: vault-agents
+  become: yes
+  tasks:
+    - include_role:
+        name: wireguard
+    
+    - include_role:
+        name: wireguard
+        tasks_from: service
+
+    - include_role:
+        name: vault
+
+    - include_role:
+        name: vault-agent

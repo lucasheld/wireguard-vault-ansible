@@ -1,0 +1,111 @@
+---
+- name: install requirements
+  apt:
+    name:
+      - jq
+    state: latest
+    update_cache: yes
+
+- name: create vault config dir
+  file:
+    path: /root/vault
+    state: directory
+    mode: 0644
+
+- name: copy vault-server systemd service
+  copy:
+    src: vault-server.service
+    dest: /etc/systemd/system/vault-server.service
+  notify:
+    - restart vault-server
+
+- name: copy vault-init.sh
+  copy:
+    src: vault-init.sh
+    dest: /root/vault-init.sh
+
+- name: make vault-init.sh executable
+  file:
+    path: /root/vault-init.sh
+    state: file
+    mode: +x
+
+- name: copy vault-unseal.sh
+  copy:
+    src: vault-unseal.sh
+    dest: /root/vault-unseal.sh
+
+- name: make vault-unseal.sh executable
+  file:
+    path: /root/vault-unseal.sh
+    state: file
+    mode: +x
+
+- name: copy vault-unseal systemd service
+  copy:
+    src: vault-unseal.service
+    dest: /etc/systemd/system/vault-unseal.service
+  notify:
+    - enable vault-unseal
+
+- name: copy vault-configure.sh
+  copy:
+    src: vault-configure.sh
+    dest: /root/vault-configure.sh
+
+- name: make vault-configure.sh executable
+  file:
+    path: /root/vault-configure.sh
+    state: file
+    mode: +x
+
+- name: copy vault-rotate.sh to destination
+  template:
+    src: vault-rotate.sh.j2
+    dest: /root/vault-rotate.sh
+    mode: 0644
+    force: yes
+
+- name: make vault-rotate.sh executable
+  file:
+    path: /root/vault-rotate.sh
+    state: file
+    mode: +x
+
+- name: create vault-rotate cronjob
+  cron:
+    name: vault-rotate
+    job: /root/rotate.sh
+    minute: "{{ rotate_schedule.minute }}"
+    hour: "{{ rotate_schedule.hour }}"
+    day: "{{ rotate_schedule.day }}"
+    month: "{{ rotate_schedule.month }}"
+    weekday: "{{ rotate_schedule.weekday }}"
+
+- name: copy vault-helper.py
+  copy:
+    src: vault-helper.py
+    dest: /root/vault-helper.py
+
+- name: copy vault-server config
+  copy:
+    src: vault-server.hcl
+    dest: /etc/vault.d/vault-server.hcl
+  notify:
+    - restart vault-server
+
+# flush handlers to start triggered handlers before next task is executed
+- meta: flush_handlers
+
+- name: execute vault-init.sh
+  command: sh /root/vault-init.sh
+
+- name: execute vault-unseal.sh
+  command: sh /root/vault-unseal.sh
+
+- name: execute vault-configure.sh
+  command: sh /root/vault-configure.sh
+  retries: 6
+  delay: 5
+  register: result
+  until: result.rc == 0

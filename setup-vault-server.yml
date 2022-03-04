@@ -1,0 +1,12 @@
+---
+- hosts: vault-server
+  become: yes
+  tasks:
+    - include_role:
+        name: wireguard
+    
+    - include_role:
+        name: vault
+
+    - include_role:
+        name: vault-server

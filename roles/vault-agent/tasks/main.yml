@@ -1,0 +1,73 @@
+---
+- name: read vault_keys file
+  slurp:
+    src: /root/vault_keys
+  register: vault_keys_file
+  delegate_to: "{{ groups['vault-server'][0] }}"
+
+- set_fact:
+    vault_root_token: "{{ (vault_keys_file['content'] | b64decode | from_json)['root_token'] }}"
+
+- name: add client using vault-helper.py
+  command: "python3 /root/vault-helper.py --vault-addr=http://127.0.0.1:8200 --vault-token={{ vault_root_token }} add-client --host-ip {{ ansible_default_ipv4.address }}"
+  register: add_client_output
+  # task is executed on the vault-server host (there is only one)
+  delegate_to: "{{ groups['vault-server'][0] }}"
+  # limit parallel execution of this task to one host
+  throttle: 1
+
+- set_fact:
+    client_name: "{{ (add_client_output['stdout'] | from_json)['name'] }}"
+    role_id: "{{ (add_client_output['stdout'] | from_json)['role_id'] }}"
+    secret_id: "{{ (add_client_output['stdout'] | from_json)['secret_id'] }}"
+
+- name: write role id to file
+  copy:
+    content: "{{ role_id }}"
+    dest: /root/role_id-wireguard
+
+- name: write secret id to file
+  copy:
+    content: "{{ secret_id }}"
+    dest: /root/secret_id-wireguard
+
+- name: copy wg-reload.sh to destination
+  copy:
+    src: wg-reload.sh
+    dest: /usr/local/bin/wg-reload.sh
+
+- name: make wg-reload.sh executable
+  file:
+    path: /usr/local/bin/wg-reload.sh
+    state: file
+    mode: +x
+
+- name: copy wg0.ctmpl to destination
+  template:
+    src: wg0.ctmpl.j2
+    dest: /etc/wireguard/wg0.ctmpl
+    variable_start_string: "%{"
+    variable_end_string: "}%"
+    mode: 0644
+    force: yes
+  notify:
+    - restart vault-agent
+
+- name: create vault-agent systemd service
+  copy:
+    src: vault-agent.service
+    dest: /etc/systemd/system/vault-agent.service
+  notify:
+    - restart vault-agent
+
+- name: copy vault-agent.hcl to destination
+  template:
+    src: vault-agent.hcl.j2
+    dest: /etc/vault.d/vault-agent.hcl
+    mode: 0644
+    force: yes
+  notify:
+    - restart vault-agent
+
+# flush handlers to start triggered handlers before next task is executed
+- meta: flush_handlers

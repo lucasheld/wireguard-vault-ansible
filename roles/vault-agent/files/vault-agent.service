@@ -1,0 +1,14 @@
+[Unit]
+Description=vault agent
+
+[Service]
+ExecStart=/usr/bin/vault agent -config /etc/vault.d/vault-agent.hcl
+Restart=always
+RestartSec=10
+KillSignal=SIGINT
+SyslogIdentifier=vault-agent
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target

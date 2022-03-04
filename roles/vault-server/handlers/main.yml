@@ -1,0 +1,13 @@
+---
+- name: restart vault-server
+  systemd:
+    name: vault-server
+    daemon_reload: yes
+    enabled: true
+    state: restarted
+
+- name: enable vault-unseal
+  systemd:
+    name: vault-unseal
+    daemon_reload: yes
+    enabled: true

@@ -1,0 +1,14 @@
+[Unit]
+Description=vault server
+
+[Service]
+ExecStart=/usr/bin/vault server -config /etc/vault.d/vault-server.hcl
+Restart=always
+RestartSec=10
+KillSignal=SIGINT
+SyslogIdentifier=vault-server
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
